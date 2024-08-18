@@ -1,0 +1,181 @@
+[
+    {   "name": "animals",
+        "cards": 
+            [
+                {
+                    "value":"pig",
+                    "name": "pig",
+                    "sound": "oink",
+                    "meat": "pork"
+                },
+                {   
+                    "value":"cow",
+                    "name": "cow",
+                    "sound": "moo",
+                    "meat": "beef"
+                },
+                {
+                    "value": "chicken",
+                    "name": "chicken",
+                    "sound": "cluck",
+                    "meat": "chicken"
+                },
+                {
+                    "value": "sheep",
+                    "name": "sheep",
+                    "sound": "baa",
+                    "meat": "mutton"
+                },
+                {
+                    "value": "deer",
+                    "name": "deer",
+                    "sound": "howl",
+                    "meat": "venison"
+                },
+                {
+                    "value": "rabbit",
+                    "name": "rabbit",
+                    "sound": "thump",
+                    "meat": "rabbit"
+                },
+                {
+                    "value": "duck",
+                    "name": "duck",
+                    "sound": "quack",
+                    "meat": "duck"
+                },
+                {   
+                    "value": "goat",
+                    "name": "goat",
+                    "sound": "baa",
+                    "meat": "chevon"
+                },
+                {
+                    "value": "fish",
+                    "name": "fish",
+                    "sound": "glub",
+                    "meat": "sushimi"
+                }
+            ]
+    },
+    {
+        "name": "emotions",
+        "cards": 
+            [
+                {
+                    "value": "happy",
+                    "name": "happy",
+                    "sound": "laugh",
+                    "emoji": "😄"
+                },
+                {
+                    "value": "sad",
+                    "name": "sad",
+                    "sound": "cry",
+                    "emoji": "😢"
+                },
+                {
+                    "value": "angry",
+                    "name": "angry",
+                    "sound": "shout",
+                    "emoji": "😡"
+                },
+                {
+                    "value": "surprised",
+                    "name": "surprised",
+                    "sound": "gasp",
+                    "emoji": "😲"
+                },
+                {
+                    "value": "scared",
+                    "name": "scared",
+                    "sound": "scream",
+                    "emoji": "😱"
+                },
+                {
+                    "value": "disgusted",
+                    "name": "disgusted",
+                    "sound": "vomit",
+                    "emoji": "🤢"
+                },
+                {
+                    "value": "confused",
+                    "name": "confused",
+                    "sound": "huh",
+                    "emoji": "🤔"
+                },
+                {
+                    "value": "excited",
+                    "name": "excited",
+                    "sound": "yay",
+                    "emoji": "🎉"
+                },
+                {
+                    "value": "bored",
+                    "name": "bored",
+                    "sound": "yawn",
+                    "emoji": "😴"
+                }
+            ]
+    },
+    {
+        "name": "verbs",
+        "cards":
+            [
+                {
+                    "value": "run",
+                    "name": "run",
+                    "sound": "pant",
+                    "past": "ran"
+                },
+                {
+                    "value": "jump",
+                    "name": "jump",
+                    "sound": "boing",
+                    "past": "jumped"
+                },
+                {
+                    "value": "swim",
+                    "name": "swim",
+                    "sound": "splash",
+                    "past": "swam"
+                },
+                {
+                    "value": "fly",
+                    "name": "fly",
+                    "sound": "flap",
+                    "past": "flew"
+                },
+                {
+                    "value": "sing",
+                    "name": "sing",
+                    "sound": "la la la",
+                    "past": "sang"
+                },
+                {
+                    "value": "dance",
+                    "name": "dance",
+                    "sound": "tap",
+                    "past": "danced"
+                },
+                {
+                    "value": "eat",
+                    "name": "eat",
+                    "sound": "chew",
+                    "past": "ate"
+                },
+                {
+                    "value": "sleep",
+                    "name": "sleep",
+                    "sound": "snore",
+                    "past": "slept"
+                },
+                {
+                    "value": "drink",
+                    "name": "drink",
+                    "sound": "gulp",
+                    "past": "drank"
+                }
+            ]
+    }
+]
