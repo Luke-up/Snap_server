@@ -16,8 +16,8 @@ const io = new Server(httpServer, {
 
 const rooms = {};
 
+// Generate card options
 let allCards = [];
-
 const cardsFilePath = path.join(__dirname, 'cards.json');
 fs.readFile(cardsFilePath, 'utf8', (err, data) => {
   if (err) {
@@ -126,32 +126,51 @@ const startGame = (roomId) => {
 };
 
 const generateCardArray = (cards, settings, userCount) => {
+  console.log(cards);
+  console.log(settings);
+  console.log(userCount);
+  let cardOptionsArray = [];
+  let categoryUnSet = true;
 
-  const selectedCategories = cards.filter(card => settings[card.category]);
+  Object.keys(settings).forEach((category) => {
+    if (settings[category]) {
+      console.log(category);
+      categoryUnSet = false;
+      cardOptionsArray = cardOptionsArray.concat(cards.filter(card => card.category === category));
+    } 
+  });
+  if (categoryUnSet) {
+    cardOptionsArray = cards;
+  }
 
   const options = [];
-
-  selectedCategories.map(card => {
-    card.cards.map(innerCard => {
-      options.push(innerCard);
-    });
-  });
-
-  const cardArray = [];
-
   // Determine if we should include a matching pair (30% chance)
   const includeMatchingPair = Math.random() < 0.3;
-
   // Set the initial length to one less if we plan to add a matching pair
   const initialLength = includeMatchingPair ? userCount - 1 : userCount;
 
-  // Finish card randomization & generation functions here
+  for (let i = 0; i < initialLength; i++) {
+    const randomIndex = Math.floor(Math.random() * cardOptionsArray.length);
+    const hintType = Math.floor(Math.random() * 3) + 1;
+    if (i === 0 && includeMatchingPair) {
+      const hintType2 = hintType === 1 ? 3 : hintType === 3 ? 2 : 1;
+      const randomExtraCard = {
+        category: cardOptionsArray[randomIndex].category, 
+        value: cardOptionsArray[randomIndex].value, 
+        hint: hintType2
+      };
+      options.push(randomExtraCard);
+    }
+    const randomCard = {
+      category: cardOptionsArray[randomIndex].category, 
+      value: cardOptionsArray[randomIndex].value, 
+      hint: hintType
+    };
+    options.push(randomCard);
+  }
 
-  return cardArray;
+  return options;
 };
-
-
-
 
 // Function to generate a unique room ID
 function generateRoomId() {
