@@ -72,10 +72,7 @@ io.on('connection', (socket) => {
   socket.on('chat', (data) => {
     const roomId = getRoomId(socket);
     if (roomId) {
-      
-      const cardcase = generateCardArray(allCards, rooms[roomId].settings, rooms[roomId].users.length)
-      console.log('cardcase:', cardcase);
-      socket.broadcast.to(roomId).emit('chat', { message: `${data.name}: ${data.chat}: ${cardcase}`, data });
+      socket.broadcast.to(roomId).emit('chat', { message: `${data.name}: ${data.chat}`, data });
       socket.emit('chatResponse', { message: `You: ${data.chat}`, data });
     }
   });
@@ -157,14 +154,14 @@ const generateCardArray = (cards, settings, userCount) => {
       const randomExtraCard = {
         category: cardOptionsArray[randomIndex].category, 
         value: cardOptionsArray[randomIndex].value, 
-        hint: hintType2
+        hint: cardOptionsArray[randomIndex][hintType2]
       };
       options.push(randomExtraCard);
     }
     const randomCard = {
       category: cardOptionsArray[randomIndex].category, 
       value: cardOptionsArray[randomIndex].value, 
-      hint: hintType
+      hint: cardOptionsArray[randomIndex][hintType]
     };
     options.push(randomCard);
   }
