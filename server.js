@@ -54,17 +54,36 @@ io.on('connection', (socket) => {
       socket.join(roomId);
       rooms[roomId].users.push(socket.id);
       socket.emit('roomJoined', { roomId, settings: rooms[roomId].settings });
+      if (rooms[roomId].users.length = 2) {
+        io.to(roomId).emit('readyOkay', { message: 'Room is ready to start!' });
+        socket.emit('readyOkay', { message: 'Room is ready to start!' });
+      } else if (rooms[roomId].users.length > 2) {
+        socket.emit('readyOkay', { message: 'Room is ready to start!' });
+      }
     } else {
       socket.emit('roomFull', { message: 'Room is full or does not exist' });
     }
   });
 
   // Handle the snap event
-  socket.on('snap', (data) => {
+  socket.on('snapCalled', (data) => {
     const roomId = getRoomId(socket);
-    console.log('roomId:', roomId);
     if (roomId) {
-      io.to(roomId).emit('snap', { message: 'A user spies a snap!', data });
+      socket.broadcast.to(roomId).emit('snapCalled', { message: 'A user spies a snap!', data });
+      socket.emit('chatResponse', { message: `You called a snap you goose, hurry!`, data });
+    }
+  });
+
+  socket.on('snapFailed', (data) => {
+    const roomId = getRoomId(socket);
+    if (roomId) {
+      socket.broadcast.to(roomId).emit('snapFailed', { message: `${data.name} failed to snap!`, data });
+    }
+  });
+  socket.on('snapSuccess', (data) => {
+    const roomId = getRoomId(socket);
+    if (roomId) {
+      socket.broadcast.to(roomId).emit('snapSuccess', { message: `${data.name} snapped!`, data });
     }
   });
 
