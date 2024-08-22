@@ -69,8 +69,24 @@ io.on('connection', (socket) => {
   socket.on('snapCalled', (data) => {
     const roomId = getRoomId(socket);
     if (roomId) {
-      socket.broadcast.to(roomId).emit('snapCalled', { message: 'A user spies a snap!', data });
+      socket.broadcast.to(roomId).emit('snapCalled', { message: `${data.name} spies a snap!`, data });
       socket.emit('chatResponse', { message: `You called a snap you goose, hurry!`, data });
+    }
+  });
+
+  socket.on('noSnapSuccess', (data) => {
+    const roomId = getRoomId(socket);
+    if (roomId) {
+      socket.broadcast.to(roomId).emit('noSnapCalled', { message: `${data.name} successfully deduced no snaps!`, data });
+      socket.emit('chatResponse', { message: `You called no snaps, bold move!`, data });
+    }
+  });
+
+  socket.on('noSnapFailure', (data) => {
+    const roomId = getRoomId(socket);
+    if (roomId) {
+      socket.broadcast.to(roomId).emit('noSnapFailed', { message: `${data.name} mistakenly guessed no snaps!`, data });
+      socket.emit('chatResponse', { message: `You called no snaps, bad move!`, data });
     }
   });
 
@@ -139,6 +155,7 @@ const startGame = (roomId) => {
   });
 
   io.in(roomId).emit('gameStarted');
+  rooms[roomId].gameState.readyUsers = [];
 };
 
 const generateCardArray = (cards, settings, userCount) => {
