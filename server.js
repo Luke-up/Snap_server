@@ -42,6 +42,9 @@ io.on('connection', (socket) => {
       users: [socket.id],
       gameState: {
         readyUsers: [],
+        loserUsers: [],
+        cards: [],
+        match: false,
       },
     };
     socket.join(roomId);
@@ -50,56 +53,32 @@ io.on('connection', (socket) => {
   });
 
   socket.on('joinRoom', (roomId) => {
+    console.log(`Socket ${socket.id} joined room ${roomId}`);
     if (rooms[roomId] && rooms[roomId].users.length < 5) {
       socket.join(roomId);
       rooms[roomId].users.push(socket.id);
       socket.emit('roomJoined', { roomId, settings: rooms[roomId].settings });
-      if (rooms[roomId].users.length = 2) {
-        io.to(roomId).emit('readyOkay', { message: 'Room is ready to start!' });
-        socket.emit('readyOkay', { message: 'Room is ready to start!' });
-      } else if (rooms[roomId].users.length > 2) {
-        socket.emit('readyOkay', { message: 'Room is ready to start!' });
-      }
     } else {
       socket.emit('roomFull', { message: 'Room is full or does not exist' });
     }
   });
 
   // Handle the snap event
-  socket.on('snapCalled', (data) => {
+  socket.on('action', (data) => {
     const roomId = getRoomId(socket);
     if (roomId) {
-      socket.broadcast.to(roomId).emit('snapCalled', { message: `${data.name} spies a snap!`, data });
-      socket.emit('chatResponse', { message: `You called a snap you goose, hurry!`, data });
-    }
-  });
-
-  socket.on('noSnapSuccess', (data) => {
-    const roomId = getRoomId(socket);
-    if (roomId) {
-      socket.broadcast.to(roomId).emit('noSnapCalled', { message: `${data.name} successfully deduced no snaps!`, data });
-      socket.emit('chatResponse', { message: `You called no snaps, bold move!`, data });
-    }
-  });
-
-  socket.on('noSnapFailure', (data) => {
-    const roomId = getRoomId(socket);
-    if (roomId) {
-      socket.broadcast.to(roomId).emit('noSnapFailed', { message: `${data.name} mistakenly guessed no snaps!`, data });
-      socket.emit('chatResponse', { message: `You called no snaps, bad move!`, data });
-    }
-  });
-
-  socket.on('snapFailed', (data) => {
-    const roomId = getRoomId(socket);
-    if (roomId) {
-      socket.broadcast.to(roomId).emit('snapFailed', { message: `${data.name} failed to snap!`, data });
-    }
-  });
-  socket.on('snapSuccess', (data) => {
-    const roomId = getRoomId(socket);
-    if (roomId) {
-      socket.broadcast.to(roomId).emit('snapSuccess', { message: `${data.name} snapped!`, data });
+      if (data.action === "ready") {
+        handleReady(roomId, socket, data);
+      }
+      if (data.action === "snap") {
+        handleSnap(roomId, socket, data);
+      }
+      if (data.action === "noSnap") {
+        handleNoSnap(roomId, socket, data);
+      }
+      if (data.action === "cardSelect") {
+        handleSelectCards(roomId, socket, data);
+      }
     }
   });
 
@@ -108,21 +87,7 @@ io.on('connection', (socket) => {
     const roomId = getRoomId(socket);
     if (roomId) {
       socket.broadcast.to(roomId).emit('chat', { message: `${data.name}: ${data.chat}`, data });
-      socket.emit('chatResponse', { message: `You: ${data.chat}`, data });
-    }
-  });
-
-  // Handle the ready event
-  socket.on('ready', (data) => {
-    const roomId = getRoomId(socket);
-    if (roomId) {
-      rooms[roomId].gameState.readyUsers.push(socket.id);
-      socket.broadcast.to(roomId).emit('ready', { message: `${data.name} is ready!`, data });
-      socket.emit('ready', { message: `You are ready!`, data });
-      if (rooms[roomId].gameState.readyUsers.length === rooms[roomId].users.length) {
-        console.log('All users ready');
-        startGame(roomId);
-      }
+      socket.emit('chat', { message: `You: ${data.chat}`, data });
     }
   });
 
@@ -138,30 +103,84 @@ io.on('connection', (socket) => {
   });
 });
 
+// Handle the ready event
+const handleReady = (roomId, socket, data) => {
+  rooms[roomId].gameState.readyUsers.push(socket.id);
+  if (rooms[roomId].gameState.readyUsers.length === rooms[roomId].users.length) {
+    socket.broadcast.to(roomId).emit('chat', { message: `All users ready`, data });
+    socket.emit('gamePlay', { message: `You are ready!`, state: {lobby: false, countDown: false, inGame: false, gameHero: false, gameObserver: false, gameLoser: false, gameCheck: true} })
+    console.log('All users ready');
+    startGame(roomId);
+  } else {
+    socket.broadcast.to(roomId).emit('chat', { message: `${data.name} is ready!`, data });
+    socket.emit('gamePlay', { message: `You are ready!`, state: {lobby: false, countDown: false, inGame: false, gameHero: false, gameObserver: false, gameLoser: false, gameCheck: true} });
+  }
+};
+
+const handleSnap = (roomId, socket, data) => {
+  socket.broadcast.to(roomId).emit('gamePlay', { message: `${data.name} spies a snap!`, state: {lobby: false, countDown: false, inGame: false, gameHero: false, gameObserver: true, gameLoser: false, gameCheck: false} });
+  socket.emit('gamePlay', { message: `You called a snap you goose, hurry!`, state: {lobby: false, countDown: false, inGame: false, gameHero: true, gameObserver: false, gameLoser: false, gameCheck: false} });
+}
+
+const handleNoSnap = (roomId, socket, data) => {
+  socket.broadcast.to(roomId).emit('gamePlay', { message: `${data.name} declares no matches!`, state: {lobby: false, countDown: false, inGame: false, gameHero: false, gameObserver: false, gameLoser: false, gameCheck: true} });
+  socket.emit('gamePlay', { message: `You just said there were no matches!`, state: {lobby: false, countDown: false, inGame: false, gameHero: false, gameObserver: false, gameLoser: false, gameCheck: true} });
+  setTimeout(() => {
+    if(! rooms[roomId].gameState.match) {
+      socket.emit('gamePlay', { message: `You were right, there are no matches!`, state: {lobby: true, countDown: false, inGame: false, gameHero: false, gameObserver: false, gameLoser: true, gameCheck: false} });
+      socket.broadcast.to(roomId).emit('gamePlay', { message: `${data.name} was right, there are no matches!`, state: {lobby: true, countDown: false, inGame: false, gameHero: false, gameObserver: false, gameLoser: true, gameCheck: false} });
+      rooms[roomId].gameState.loserUsers = [];
+    } else if (rooms[roomId].gameState.loserUsers && rooms[roomId].gameState.loserUsers.length === rooms[roomId].users.length - 1) {
+      socket.emit('gamePlay', { message: `You were wong, there was a match! Looks like nobody wins this round.`, state: {lobby: true, countDown: false, inGame: false, gameHero: false, gameObserver: false, gameLoser: false, gameCheck: false} });
+      socket.broadcast.to(roomId).emit('gamePlay', { message: `${data.name} was wrong, there is a match! Looks like nobody wins this round.`, state: {lobby: true, countDown: false, inGame: false, gameHero: false, gameObserver: false, gameLoser: false, gameCheck: false} });
+      rooms[roomId].gameState.loserUsers = [];
+    } else {
+      socket.emit('gamePlay', { message: `You were wrong, there was a match!`, state: {lobby: false, countDown: false, inGame: false, gameHero: false, gameObserver: false, gameLoser: true, gameCheck: false} });
+      socket.broadcast.to(roomId).emit('gamePlay', { message: `${data.name} was wrong, there is a match!`, state: {lobby: false, countDown: false, inGame: true, gameHero: false, gameObserver: false, gameLoser: false, gameCheck: false} });
+      rooms[roomId].gameState.loserUsers.push(socket.id);
+    }
+  }, 2000);
+  
+}
+
+const handleSelectCards = (roomId, socket, data) => {
+  socket.broadcast.to(roomId).emit('gamePlay', { state: {lobby: false, countDown: false, inGame: false, gameHero: false, gameObserver: false, gameLoser: false, gameCheck: true} });
+  socket.emit('gamePlay', { state: {lobby: false, countDown: false, inGame: false, gameHero: false, gameObserver: false, gameLoser: false, gameCheck: true} });
+  console.log('Select cards:', data);
+  if (data.cards[0].card === data.cards[1].card) {
+    socket.emit('gamePlay', { message: `Yes! It's a match`, state: {lobby: true, countDown: false, inGame: false, gameHero: false, gameObserver: false, gameLoser: true, gameCheck: false} });
+    socket.broadcast.to(roomId).emit('gamePlay', { message: `${data.name} was right, they found a match!`, state: {lobby: true, countDown: false, inGame: false, gameHero: false, gameObserver: false, gameLoser: true, gameCheck: false} });
+    rooms[roomId].gameState.loserUsers = [];
+  } else if (rooms[roomId].gameState.loserUsers && rooms[roomId].gameState.loserUsers.length === rooms[roomId].users.length - 1) {
+    socket.emit('gamePlay', { message: `You were wrong, these are not matches! Looks like nobody wins this round.`, state: {lobby: true, countDown: false, inGame: false, gameHero: false, gameObserver: false, gameLoser: false, gameCheck: false} });
+    socket.broadcast.to(roomId).emit('gamePlay', { message: `${data.name} couldn't find a matching pair! Looks like nobody wins this round.`, state: {lobby: true, countDown: false, inGame: false, gameHero: false, gameObserver: false, gameLoser: false, gameCheck: false} });
+    rooms[roomId].gameState.loserUsers = [];
+  } else {
+    socket.emit('gamePlay', { message: `You were wrong, these are not matches!`, state: {lobby: false, countDown: false, inGame: false, gameHero: false, gameObserver: false, gameLoser: true, gameCheck: false} });
+    socket.broadcast.to(roomId).emit('gamePlay', { message: `${data.name} couldn't find a matching pair!`, state: {lobby: false, countDown: false, inGame: true, gameHero: false, gameObserver: false, gameLoser: false, gameCheck: false} });
+    rooms[roomId].gameState.loserUsers.push(socket.id);
+  }
+}
+
 const startGame = (roomId) => {
-  const room = rooms[roomId];
-  if (!room) return;
-
-  const { users, settings } = room;
+  const { users, settings } = rooms[roomId];
   const cards = generateCardArray(allCards, settings, users.length);
-  console.log('cards:', cards);
-
+  rooms[roomId].gameState.cards = cards.options;
+  rooms[roomId].gameState.match = cards.match;
+  console.log('Game starting with cards:', cards);
   users.forEach((userId, index) => {
-    const userCard = cards[index];
-    const remainingCards = cards.filter((_, i) => i !== index);
-
-    // Send the user's card and the remaining cards
+    const userCard = cards.options[index];
+    const remainingCards = cards.options.filter((_, i) => i !== index);
     io.to(userId).emit('receiveCards', { userCard, remainingCards });
   });
-
-  io.in(roomId).emit('gameStarted');
+  io.in(roomId).emit('gamePlay', { message: 'Loading...', state: {lobby: false, countDown: true, inGame: false, gameHero: false, gameObserver: false, gameLoser: false, gameCheck: false}});
+  setTimeout(() => {
+    io.in(roomId).emit('gamePlay', { message: 'Game start!', action:"gameStart", state: {lobby: false, countDown: false, inGame: true, gameHero: false, gameObserver: false, gameLoser: false, gameCheck: false}});
+  }, 3000);
   rooms[roomId].gameState.readyUsers = [];
 };
 
 const generateCardArray = (cards, settings, userCount) => {
-  console.log(cards);
-  console.log(settings);
-  console.log(userCount);
   let cardOptionsArray = [];
   let categoryUnSet = true;
 
@@ -202,7 +221,7 @@ const generateCardArray = (cards, settings, userCount) => {
     options.push(randomCard);
   }
 
-  return options;
+  return ({options: options, match: includeMatchingPair});
 };
 
 // Function to generate a unique room ID
