@@ -202,22 +202,24 @@ const generateCardArray = (cards, settings, userCount) => {
   const initialLength = includeMatchingPair ? userCount - 1 : userCount;
 
   for (let i = 0; i < initialLength; i++) {
-    const randomIndex = Math.floor(Math.random() * cardOptionsArray.length);
+    let currentCardOptions = cardOptionsArray;
+    const randomIndex = Math.floor(Math.random() * currentCardOptions.length);
     const hintType = Math.floor(Math.random() * 3) + 1;
     if (i === 0 && includeMatchingPair) {
       const hintType2 = hintType === 1 ? 3 : hintType === 3 ? 2 : 1;
       const randomExtraCard = {
-        category: cardOptionsArray[randomIndex].category, 
-        value: cardOptionsArray[randomIndex].value, 
-        hint: cardOptionsArray[randomIndex][hintType2]
+        category: currentCardOptions[randomIndex].category, 
+        value: currentCardOptions[randomIndex].value, 
+        hint: currentCardOptions[randomIndex][hintType2]
       };
       options.push(randomExtraCard);
     }
     const randomCard = {
-      category: cardOptionsArray[randomIndex].category, 
-      value: cardOptionsArray[randomIndex].value, 
-      hint: cardOptionsArray[randomIndex][hintType]
+      category: currentCardOptions[randomIndex].category, 
+      value: currentCardOptions[randomIndex].value, 
+      hint: currentCardOptions[randomIndex][hintType]
     };
+    currentCardOptions.splice(randomIndex, 1);
     options.push(randomCard);
   }
 
