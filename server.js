@@ -38,7 +38,7 @@ io.on('connection', (socket) => {
   socket.on('createRoom', (settings) => {
     const roomId = generateRoomId();
     rooms[roomId] = {
-      settings,
+      settings: settings.categories,
       users: [socket.id],
       gameState: {
         readyUsers: [],
@@ -139,20 +139,20 @@ const handleNoSnap = (roomId, socket, data) => {
   socket.emit('gamePlay', { message: `You just said there were no matches!`, state: {lobby: false, countDown: false, inGame: false, gameHero: false, gameObserver: false, gameLoser: false, gameCheck: true} });
   setTimeout(() => {
     if(! rooms[roomId].gameState.match) {
-      socket.emit('gamePlay', { message: `You were right, there are no matches!`, state: {lobby: true, countDown: false, inGame: false, gameHero: false, gameObserver: false, gameLoser: true, gameCheck: false} });
+      rooms[roomId].scoreCard[socket.id].score += 1;
+      socket.emit('gamePlay', { scoreCard: rooms[roomId].scoreCard, message: `You were right, there are no matches!`, state: {lobby: true, countDown: false, inGame: false, gameHero: false, gameObserver: false, gameLoser: true, gameCheck: false} });
       socket.broadcast.to(roomId).emit('gamePlay', { scoreCard: rooms[roomId].scoreCard, message: `${data.name} was right, there are no matches!`, state: {lobby: true, countDown: false, inGame: false, gameHero: false, gameObserver: false, gameLoser: true, gameCheck: false} });
       rooms[roomId].gameState.loserUsers = [];
-      rooms[roomId].scoreCard.user[socket.id].score += 1;
     } else if (rooms[roomId].gameState.loserUsers && rooms[roomId].gameState.loserUsers.length === rooms[roomId].users.length - 1) {
-      socket.emit('gamePlay', { message: `You were wong, there was a match! Looks like nobody wins this round.`, state: {lobby: true, countDown: false, inGame: false, gameHero: false, gameObserver: false, gameLoser: false, gameCheck: false} });
+      rooms[roomId].scoreCard[socket.id].score -= 0.5;
+      socket.emit('gamePlay', { scoreCard: rooms[roomId].scoreCard, message: `You were wong, there was a match! Looks like nobody wins this round.`, state: {lobby: true, countDown: false, inGame: false, gameHero: false, gameObserver: false, gameLoser: false, gameCheck: false} });
       socket.broadcast.to(roomId).emit('gamePlay', { scoreCard: rooms[roomId].scoreCard, message: `${data.name} was wrong, there is a match! Looks like nobody wins this round.`, state: {lobby: true, countDown: false, inGame: false, gameHero: false, gameObserver: false, gameLoser: false, gameCheck: false} });
       rooms[roomId].gameState.loserUsers = [];
-      rooms[roomId].scoreCard.user[socket.id].score -= 0.5;
     } else {
-      socket.emit('gamePlay', { message: `You were wrong, there was a match!`, state: {lobby: false, countDown: false, inGame: false, gameHero: false, gameObserver: false, gameLoser: true, gameCheck: false} });
-      socket.broadcast.to(roomId).emit('gamePlay', { message: `${data.name} was wrong, there is a match!`, state: {lobby: false, countDown: false, inGame: true, gameHero: false, gameObserver: false, gameLoser: false, gameCheck: false} });
+      rooms[roomId].scoreCard[socket.id].score -= 0.5;
+      socket.emit('gamePlay', { scoreCard: rooms[roomId].scoreCard, message: `You were wrong, there was a match!`, state: {lobby: false, countDown: false, inGame: false, gameHero: false, gameObserver: false, gameLoser: true, gameCheck: false} });
+      socket.broadcast.to(roomId).emit('gamePlay', { scoreCard: rooms[roomId].scoreCard, message: `${data.name} was wrong, there is a match!`, state: {lobby: false, countDown: false, inGame: true, gameHero: false, gameObserver: false, gameLoser: false, gameCheck: false} });
       rooms[roomId].gameState.loserUsers.push(socket.id);
-      rooms[roomId].scoreCard.user[socket.id].score -= 0.5;
     }
   }, 2000);
   
@@ -163,25 +163,26 @@ const handleSelectCards = (roomId, socket, data) => {
   socket.emit('gamePlay', { state: {lobby: false, countDown: false, inGame: false, gameHero: false, gameObserver: false, gameLoser: false, gameCheck: true} });
   console.log('Select cards:', data);
   if (data.cards[0].card === data.cards[1].card) {
-    socket.emit('gamePlay', { message: `Yes! It's a match`, state: {lobby: true, countDown: false, inGame: false, gameHero: false, gameObserver: false, gameLoser: true, gameCheck: false} });
+    rooms[roomId].scoreCard[socket.id].score += 1;
+    socket.emit('gamePlay', { scoreCard: rooms[roomId].scoreCard, message: `Yes! It's a match`, state: {lobby: true, countDown: false, inGame: false, gameHero: false, gameObserver: false, gameLoser: true, gameCheck: false} });
     socket.broadcast.to(roomId).emit('gamePlay', { scoreCard: rooms[roomId].scoreCard, message: `${data.name} was right, they found a match!`, state: {lobby: true, countDown: false, inGame: false, gameHero: false, gameObserver: false, gameLoser: true, gameCheck: false} });
     rooms[roomId].gameState.loserUsers = [];
-    rooms[roomId].scoreCard.user[socket.id].score += 1;
   } else if (rooms[roomId].gameState.loserUsers && rooms[roomId].gameState.loserUsers.length === rooms[roomId].users.length - 1) {
-    socket.emit('gamePlay', { message: `You were wrong, these are not matches! Looks like nobody wins this round.`, state: {lobby: true, countDown: false, inGame: false, gameHero: false, gameObserver: false, gameLoser: false, gameCheck: false} });
+    rooms[roomId].scoreCard[socket.id].score -= 0.5;
+    socket.emit('gamePlay', { scoreCard: rooms[roomId].scoreCard, message: `You were wrong, these are not matches! Looks like nobody wins this round.`, state: {lobby: true, countDown: false, inGame: false, gameHero: false, gameObserver: false, gameLoser: false, gameCheck: false} });
     socket.broadcast.to(roomId).emit('gamePlay', { scoreCard: rooms[roomId].scoreCard, message: `${data.name} couldn't find a matching pair! Looks like nobody wins this round.`, state: {lobby: true, countDown: false, inGame: false, gameHero: false, gameObserver: false, gameLoser: false, gameCheck: false} });
     rooms[roomId].gameState.loserUsers = [];
-    rooms[roomId].scoreCard.user[socket.id].score -= 0.5;
   } else {
-    socket.emit('gamePlay', { message: `You were wrong, these are not matches!`, state: {lobby: false, countDown: false, inGame: false, gameHero: false, gameObserver: false, gameLoser: true, gameCheck: false} });
-    socket.broadcast.to(roomId).emit('gamePlay', { message: `${data.name} couldn't find a matching pair!`, state: {lobby: false, countDown: false, inGame: true, gameHero: false, gameObserver: false, gameLoser: false, gameCheck: false} });
+    rooms[roomId].scoreCard[socket.id].score -= 0.5;
+    socket.emit('gamePlay', { scoreCard: rooms[roomId].scoreCard, message: `You were wrong, these are not matches!`, state: {lobby: false, countDown: false, inGame: false, gameHero: false, gameObserver: false, gameLoser: true, gameCheck: false} });
+    socket.broadcast.to(roomId).emit('gamePlay', {scoreCard: rooms[roomId].scoreCard, message: `${data.name} couldn't find a matching pair!`, state: {lobby: false, countDown: false, inGame: true, gameHero: false, gameObserver: false, gameLoser: false, gameCheck: false} });
     rooms[roomId].gameState.loserUsers.push(socket.id);
-    rooms[roomId].scoreCard.user[socket.id].score -= 0.5;
   }
 }
 
 const startGame = (roomId) => {
   const { users, settings } = rooms[roomId];
+  console.log("settings", settings);
   const cards = generateCardArray(allCards, settings, users.length);
   rooms[roomId].gameState.cards = cards.options;
   rooms[roomId].gameState.match = cards.match;
@@ -232,6 +233,7 @@ const generateCardArray = (cards, settings, userCount) => {
       };
       options.push(randomExtraCard);
     }
+    console.log(currentCardOptions[randomIndex])
     const randomCard = {
       category: currentCardOptions[randomIndex].category, 
       value: currentCardOptions[randomIndex].value, 
