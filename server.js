@@ -161,7 +161,6 @@ const handleNoSnap = (roomId, socket, data) => {
 const handleSelectCards = (roomId, socket, data) => {
   socket.broadcast.to(roomId).emit('gamePlay', { state: {lobby: false, countDown: false, inGame: false, gameHero: false, gameObserver: false, gameLoser: false, gameCheck: true} });
   socket.emit('gamePlay', { state: {lobby: false, countDown: false, inGame: false, gameHero: false, gameObserver: false, gameLoser: false, gameCheck: true} });
-  console.log('Select cards:', data);
   if (data.cards[0].card === data.cards[1].card) {
     rooms[roomId].scoreCard[socket.id].score += 1;
     socket.emit('gamePlay', { scoreCard: rooms[roomId].scoreCard, message: `Yes! It's a match`, state: {lobby: true, countDown: false, inGame: false, gameHero: false, gameObserver: false, gameLoser: true, gameCheck: false} });
@@ -186,7 +185,6 @@ const startGame = (roomId) => {
   const cards = generateCardArray(allCards, settings, users.length);
   rooms[roomId].gameState.cards = cards.options;
   rooms[roomId].gameState.match = cards.match;
-  console.log('Game starting with cards:', cards);
   users.forEach((userId, index) => {
     const userCard = cards.options[index];
     const remainingCards = cards.options.filter((_, i) => i !== index);
@@ -205,7 +203,6 @@ const generateCardArray = (cards, settings, userCount) => {
 
   Object.keys(settings).forEach((category) => {
     if (settings[category]) {
-      console.log(category);
       categoryUnSet = false;
       cardOptionsArray = cardOptionsArray.concat(cards.filter(card => card.category === category));
     } 
@@ -233,7 +230,6 @@ const generateCardArray = (cards, settings, userCount) => {
       };
       options.push(randomExtraCard);
     }
-    console.log(currentCardOptions[randomIndex])
     const randomCard = {
       category: currentCardOptions[randomIndex].category, 
       value: currentCardOptions[randomIndex].value, 
