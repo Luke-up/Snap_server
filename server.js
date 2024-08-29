@@ -91,6 +91,11 @@ io.on('connection', (socket) => {
       if (data.action === "cardSelect") {
         handleSelectCards(roomId, socket, data);
       }
+      if (data.action === "logout") {
+        rooms[roomId].users = rooms[roomId].users.filter(userId => userId !== socket.id);
+        delete rooms[roomId].scoreCard[socket.id];
+        socket.disconnect();
+      }
     }
   });
 
