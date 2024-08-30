@@ -60,7 +60,6 @@ io.on('connection', (socket) => {
 
   socket.on('joinRoom', (joinSettings) => {
     const roomId = joinSettings.roomId;
-    console.log(`Socket ${socket.id} joined room ${roomId}`);
     if (rooms[roomId] && rooms[roomId].users.length < 5) {
       socket.join(roomId);
       rooms[roomId].users.push(socket.id);
@@ -68,8 +67,9 @@ io.on('connection', (socket) => {
         name: joinSettings.name,
         score: 0,
       };
-      socket.emit('roomJoined', { roomId, settings: rooms[roomId].settings, scoreCard: rooms[roomId].scoreCard });
-      socket.broadcast.to(roomId).emit('playerJoined', { scoreCard: rooms[roomId].scoreCard });
+      
+      socket.broadcast.to(roomId).emit('playerJoined', { scoreCard: rooms[roomId].scoreCard, message: `${joinSettings.name} has logged on` });
+      socket.emit('roomJoined', { scoreCard: rooms[roomId].scoreCard });
     } else {
       socket.emit('roomFull', { message: 'Room is full or does not exist' });
     }
@@ -94,7 +94,11 @@ io.on('connection', (socket) => {
       if (data.action === "logout") {
         rooms[roomId].users = rooms[roomId].users.filter(userId => userId !== socket.id);
         delete rooms[roomId].scoreCard[socket.id];
-        socket.disconnect();
+        if (rooms[roomId].users.length === 0) {
+          delete rooms[roomId];
+        } else if (rooms[roomId].users.length === 1) {
+          socket.broadcast.to(roomId).emit('gamePlay', { scoreCard: rooms[roomId].scoreCard, message: `${data.name} has logged out`, state: {lobby: true, countDown: false, inGame: false, gameHero: false, gameObserver: false, gameLoser: false, gameCheck: false} });
+        }
       }
     }
   });
