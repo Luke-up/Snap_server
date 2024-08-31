@@ -60,7 +60,6 @@ io.on('connection', (socket) => {
 
   socket.on('joinRoom', (joinSettings) => {
     const roomId = joinSettings.roomId;
-    console.log(`Socket ${socket.id} joined room ${roomId}`);
     if (rooms[roomId] && rooms[roomId].users.length < 5) {
       socket.join(roomId);
       rooms[roomId].users.push(socket.id);
@@ -68,8 +67,10 @@ io.on('connection', (socket) => {
         name: joinSettings.name,
         score: 0,
       };
-      socket.emit('roomJoined', { roomId, settings: rooms[roomId].settings, scoreCard: rooms[roomId].scoreCard });
-      socket.broadcast.to(roomId).emit('playerJoined', { scoreCard: rooms[roomId].scoreCard });
+      
+      socket.broadcast.to(roomId).emit('playerJoined', { scoreCard: rooms[roomId].scoreCard, message: `${joinSettings.name} has logged on` });
+      console.log(`User joined room = ${roomId}`);
+      socket.emit('roomJoined', { scoreCard: rooms[roomId].scoreCard });
     } else {
       socket.emit('roomFull', { message: 'Room is full or does not exist' });
     }
@@ -90,6 +91,15 @@ io.on('connection', (socket) => {
       }
       if (data.action === "cardSelect") {
         handleSelectCards(roomId, socket, data);
+      }
+      if (data.action === "logout") {
+        rooms[roomId].users = rooms[roomId].users.filter(userId => userId !== socket.id);
+        delete rooms[roomId].scoreCard[socket.id];
+        if (rooms[roomId].users.length === 0) {
+          delete rooms[roomId];
+        } else if (rooms[roomId].users.length >= 1) {
+          socket.broadcast.to(roomId).emit('gamePlay', { scoreCard: rooms[roomId].scoreCard, message: `${data.name} has logged out`, state: {lobby: true, countDown: false, inGame: false, gameHero: false, gameObserver: false, gameLoser: false, gameCheck: false} });
+        }
       }
     }
   });
@@ -121,7 +131,6 @@ const handleReady = (roomId, socket, data) => {
   if (rooms[roomId].gameState.readyUsers.length === rooms[roomId].users.length) {
     socket.broadcast.to(roomId).emit('chat', { message: `All users ready`, data });
     socket.emit('gamePlay', { message: `You are ready!`, state: {lobby: false, countDown: false, inGame: false, gameHero: false, gameObserver: false, gameLoser: false, gameCheck: true} })
-    console.log('All users ready');
     startGame(roomId);
   } else {
     socket.broadcast.to(roomId).emit('chat', { message: `${data.name} is ready!`, data });
@@ -181,8 +190,7 @@ const handleSelectCards = (roomId, socket, data) => {
 
 const startGame = (roomId) => {
   const { users, settings } = rooms[roomId];
-  console.log("settings", settings);
-  const cards = generateCardArray(allCards, settings, users.length);
+  const cards = generateCardArray(settings, users.length);
   rooms[roomId].gameState.cards = cards.options;
   rooms[roomId].gameState.match = cards.match;
   users.forEach((userId, index) => {
@@ -197,18 +205,19 @@ const startGame = (roomId) => {
   rooms[roomId].gameState.readyUsers = [];
 };
 
-const generateCardArray = (cards, settings, userCount) => {
-  let cardOptionsArray = [];
+const generateCardArray = (settings, userCount) => {
+  let cardOptionsArray = [...allCards];
   let categoryUnSet = true;
+  let currentCardOptions = [];
 
   Object.keys(settings).forEach((category) => {
     if (settings[category]) {
       categoryUnSet = false;
-      cardOptionsArray = cardOptionsArray.concat(cards.filter(card => card.category === category));
+      currentCardOptions = currentCardOptions.concat(cardOptionsArray.filter(card => card.category === category));
     } 
   });
   if (categoryUnSet) {
-    cardOptionsArray = cards;
+    currentCardOptions = cardOptionsArray;
   }
 
   const options = [];
@@ -218,7 +227,6 @@ const generateCardArray = (cards, settings, userCount) => {
   const initialLength = includeMatchingPair ? userCount - 1 : userCount;
 
   for (let i = 0; i < initialLength; i++) {
-    let currentCardOptions = cardOptionsArray;
     const randomIndex = Math.floor(Math.random() * currentCardOptions.length);
     const hintType = Math.floor(Math.random() * 3) + 1;
     if (i === 0 && includeMatchingPair) {
