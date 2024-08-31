@@ -29,7 +29,6 @@ const loadCards = () => {
       }
       try {
         const parsedData = JSON.parse(data);
-        console.log('Cards loaded:', parsedData);
         resolve(parsedData);
       } catch (parseErr) {
         console.error('Error parsing cards.json:', parseErr);
@@ -42,7 +41,6 @@ const loadCards = () => {
 loadCards()
   .then(cards => {
     allCards = cards;
-    console.log('All cards have been loaded and assigned:', allCards);
   })
   .catch(err => {
     console.error('Failed to load cards:', err);
@@ -147,7 +145,6 @@ const handleReady = (roomId, socket, data) => {
   if (rooms[roomId].gameState.readyUsers.length === rooms[roomId].users.length) {
     socket.broadcast.to(roomId).emit('chat', { message: `All users ready`, data });
     socket.emit('gamePlay', { message: `You are ready!`, state: {lobby: false, countDown: false, inGame: false, gameHero: false, gameObserver: false, gameLoser: false, gameCheck: true} })
-    console.log('All users ready');
     startGame(roomId);
   } else {
     socket.broadcast.to(roomId).emit('chat', { message: `${data.name} is ready!`, data });
@@ -207,8 +204,6 @@ const handleSelectCards = (roomId, socket, data) => {
 
 const startGame = (roomId) => {
   const { users, settings } = rooms[roomId];
-  console.log("settings", settings);
-  console.log("all cards: ", allCards.length);
   const cards = generateCardArray(settings, users.length);
   rooms[roomId].gameState.cards = cards.options;
   rooms[roomId].gameState.match = cards.match;
@@ -225,7 +220,6 @@ const startGame = (roomId) => {
 };
 
 const generateCardArray = (settings, userCount) => {
-  console.log("Cards: " + allCards)
   let cardOptionsArray = [...allCards];
   let categoryUnSet = true;
   let currentCardOptions = [];
@@ -239,7 +233,6 @@ const generateCardArray = (settings, userCount) => {
   if (categoryUnSet) {
     currentCardOptions = cardOptionsArray;
   }
-  console.log("array " + cardOptionsArray)
 
   const options = [];
   // Determine if we should include a matching pair (30% chance)
@@ -248,14 +241,10 @@ const generateCardArray = (settings, userCount) => {
   const initialLength = includeMatchingPair ? userCount - 1 : userCount;
 
   for (let i = 0; i < initialLength; i++) {
-    
-    console.log("options " + currentCardOptions)
     const randomIndex = Math.floor(Math.random() * currentCardOptions.length);
-    console.log(randomIndex)
     const hintType = Math.floor(Math.random() * 3) + 1;
     if (i === 0 && includeMatchingPair) {
       const hintType2 = hintType === 1 ? 3 : hintType === 3 ? 2 : 1;
-      console.log(currentCardOptions[randomIndex].category)
       const randomExtraCard = {
         category: currentCardOptions[randomIndex].category, 
         value: currentCardOptions[randomIndex].value, 
