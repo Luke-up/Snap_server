@@ -16,35 +16,21 @@ const io = new Server(httpServer, {
 
 const rooms = {};
 
-let allCards;
-
-const loadCards = () => {
-  const cardsFilePath = path.join(__dirname, 'cards.json');
-  return new Promise((resolve, reject) => {
-    fs.readFile(cardsFilePath, 'utf8', (err, data) => {
-      if (err) {
-        console.error('Error reading cards.json:', err);
-        reject(err);
-        return;
-      }
-      try {
-        const parsedData = JSON.parse(data);
-        resolve(parsedData);
-      } catch (parseErr) {
-        console.error('Error parsing cards.json:', parseErr);
-        reject(parseErr);
-      }
-    });
-  });
-};
-
-loadCards()
-  .then(cards => {
-    allCards = cards;
-  })
-  .catch(err => {
-    console.error('Failed to load cards:', err);
-  });
+// Generate card options
+let allCards = [];
+const cardsFilePath = path.join(__dirname, 'cards.json');
+fs.readFile(cardsFilePath, 'utf8', (err, data) => {
+  if (err) {
+    console.error('Error reading cards.json:', err);
+    return;
+  }
+  try {
+    allCards = JSON.parse(data);
+    console.log('Cards loaded:', allCards);
+  } catch (parseErr) {
+    console.error('Error parsing cards.json:', parseErr);
+  }
+});
 
 io.on('connection', (socket) => {
   console.log('a user connected');
