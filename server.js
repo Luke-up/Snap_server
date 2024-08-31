@@ -16,21 +16,37 @@ const io = new Server(httpServer, {
 
 const rooms = {};
 
-// Generate card options
-let allCards = [];
-const cardsFilePath = path.join(__dirname, 'cards.json');
-fs.readFile(cardsFilePath, 'utf8', (err, data) => {
-  if (err) {
-    console.error('Error reading cards.json:', err);
-    return;
-  }
-  try {
-    allCards = JSON.parse(data);
-    console.log('Cards loaded:', allCards);
-  } catch (parseErr) {
-    console.error('Error parsing cards.json:', parseErr);
-  }
-});
+let allCards;
+
+const loadCards = () => {
+  const cardsFilePath = path.join(__dirname, 'cards.json');
+  return new Promise((resolve, reject) => {
+    fs.readFile(cardsFilePath, 'utf8', (err, data) => {
+      if (err) {
+        console.error('Error reading cards.json:', err);
+        reject(err);
+        return;
+      }
+      try {
+        const parsedData = JSON.parse(data);
+        console.log('Cards loaded:', parsedData);
+        resolve(parsedData);
+      } catch (parseErr) {
+        console.error('Error parsing cards.json:', parseErr);
+        reject(parseErr);
+      }
+    });
+  });
+};
+
+loadCards()
+  .then(cards => {
+    allCards = cards;
+    console.log('All cards have been loaded and assigned:', allCards);
+  })
+  .catch(err => {
+    console.error('Failed to load cards:', err);
+  });
 
 io.on('connection', (socket) => {
   console.log('a user connected');
@@ -69,6 +85,7 @@ io.on('connection', (socket) => {
       };
       
       socket.broadcast.to(roomId).emit('playerJoined', { scoreCard: rooms[roomId].scoreCard, message: `${joinSettings.name} has logged on` });
+      console.log(`User joined room = ${roomId}`);
       socket.emit('roomJoined', { scoreCard: rooms[roomId].scoreCard });
     } else {
       socket.emit('roomFull', { message: 'Room is full or does not exist' });
@@ -96,7 +113,7 @@ io.on('connection', (socket) => {
         delete rooms[roomId].scoreCard[socket.id];
         if (rooms[roomId].users.length === 0) {
           delete rooms[roomId];
-        } else if (rooms[roomId].users.length === 1) {
+        } else if (rooms[roomId].users.length >= 1) {
           socket.broadcast.to(roomId).emit('gamePlay', { scoreCard: rooms[roomId].scoreCard, message: `${data.name} has logged out`, state: {lobby: true, countDown: false, inGame: false, gameHero: false, gameObserver: false, gameLoser: false, gameCheck: false} });
         }
       }
@@ -191,7 +208,8 @@ const handleSelectCards = (roomId, socket, data) => {
 const startGame = (roomId) => {
   const { users, settings } = rooms[roomId];
   console.log("settings", settings);
-  const cards = generateCardArray(allCards, settings, users.length);
+  console.log("all cards: ", allCards.length);
+  const cards = generateCardArray(settings, users.length);
   rooms[roomId].gameState.cards = cards.options;
   rooms[roomId].gameState.match = cards.match;
   users.forEach((userId, index) => {
@@ -206,19 +224,22 @@ const startGame = (roomId) => {
   rooms[roomId].gameState.readyUsers = [];
 };
 
-const generateCardArray = (cards, settings, userCount) => {
-  let cardOptionsArray = [];
+const generateCardArray = (settings, userCount) => {
+  console.log("Cards: " + allCards)
+  let cardOptionsArray = [...allCards];
   let categoryUnSet = true;
+  let currentCardOptions = [];
 
   Object.keys(settings).forEach((category) => {
     if (settings[category]) {
       categoryUnSet = false;
-      cardOptionsArray = cardOptionsArray.concat(cards.filter(card => card.category === category));
+      currentCardOptions = currentCardOptions.concat(cardOptionsArray.filter(card => card.category === category));
     } 
   });
   if (categoryUnSet) {
-    cardOptionsArray = cards;
+    currentCardOptions = cardOptionsArray;
   }
+  console.log("array " + cardOptionsArray)
 
   const options = [];
   // Determine if we should include a matching pair (30% chance)
@@ -227,11 +248,14 @@ const generateCardArray = (cards, settings, userCount) => {
   const initialLength = includeMatchingPair ? userCount - 1 : userCount;
 
   for (let i = 0; i < initialLength; i++) {
-    let currentCardOptions = cardOptionsArray;
+    
+    console.log("options " + currentCardOptions)
     const randomIndex = Math.floor(Math.random() * currentCardOptions.length);
+    console.log(randomIndex)
     const hintType = Math.floor(Math.random() * 3) + 1;
     if (i === 0 && includeMatchingPair) {
       const hintType2 = hintType === 1 ? 3 : hintType === 3 ? 2 : 1;
+      console.log(currentCardOptions[randomIndex].category)
       const randomExtraCard = {
         category: currentCardOptions[randomIndex].category, 
         value: currentCardOptions[randomIndex].value, 
