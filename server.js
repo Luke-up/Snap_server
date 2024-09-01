@@ -62,11 +62,13 @@ io.on('connection', (socket) => {
     const roomId = joinSettings.roomId;
     if (rooms[roomId] && rooms[roomId].users.length < 5) {
       socket.join(roomId);
-      rooms[roomId].users.push(socket.id);
-      rooms[roomId].scoreCard[socket.id] = {
-        name: joinSettings.name,
-        score: 0,
-      };
+      if (!rooms[roomId].users.includes(socket.id)){
+        rooms[roomId].users.push(socket.id);
+        rooms[roomId].scoreCard[socket.id] = {
+          name: joinSettings.name,
+          score: 0,
+        };
+      }
       
       socket.broadcast.to(roomId).emit('playerJoined', { scoreCard: rooms[roomId].scoreCard, message: `${joinSettings.name} has logged on` });
       console.log(`User joined room = ${roomId}`);
@@ -93,13 +95,7 @@ io.on('connection', (socket) => {
         handleSelectCards(roomId, socket, data);
       }
       if (data.action === "logout") {
-        rooms[roomId].users = rooms[roomId].users.filter(userId => userId !== socket.id);
-        delete rooms[roomId].scoreCard[socket.id];
-        if (rooms[roomId].users.length === 0) {
-          delete rooms[roomId];
-        } else if (rooms[roomId].users.length >= 1) {
-          socket.broadcast.to(roomId).emit('gamePlay', { scoreCard: rooms[roomId].scoreCard, message: `${data.name} has logged out`, state: {lobby: true, countDown: false, inGame: false, gameHero: false, gameObserver: false, gameLoser: false, gameCheck: false} });
-        }
+        handleLogOut(socket);
       }
     }
   });
@@ -114,16 +110,26 @@ io.on('connection', (socket) => {
   });
 
   socket.on('disconnect', () => {
-    for (const roomId in rooms) {
-      const room = rooms[roomId];
-      room.users = room.users.filter((id) => id !== socket.id);
-      if (room.users.length === 0) {
-        delete rooms[roomId];
-      }
-    }
-    console.log('user disconnected');
+    const roomId = getRoomId(socket);
+    handleLogOut(socket);
+    console.log('user disconnected' + roomId);
   });
 });
+
+const handleLogOut = (socket) => {
+  const roomId = getRoomId(socket);
+  if (roomId) {
+    const name = rooms[roomId].scoreCard[socket.id].name;
+    rooms[roomId].users = rooms[roomId].users.filter(userId => userId !== socket.id);
+    delete rooms[roomId].scoreCard[socket.id];
+    if (rooms[roomId].users.length === 0) {
+    delete rooms[roomId];
+    } else if (rooms[roomId].users.length >= 1) {
+      socket.broadcast.to(roomId).emit('gamePlay', { scoreCard: rooms[roomId].scoreCard, message: `${name} has logged out`, state: {lobby: true, countDown: false, inGame: false, gameHero: false, gameObserver: false, gameLoser: false, gameCheck: false} });
+    }
+  }
+  
+}
 
 // Handle the ready event
 const handleReady = (roomId, socket, data) => {
@@ -246,8 +252,16 @@ const generateCardArray = (settings, userCount) => {
     currentCardOptions.splice(randomIndex, 1);
     options.push(randomCard);
   }
-
+  options.shuffle();
   return ({options: options, match: includeMatchingPair});
+};
+
+Array.prototype.shuffle = function() {
+  for (let i = this.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [this[i], this[j]] = [this[j], this[i]];
+  }
+  return this;
 };
 
 // Function to generate a unique room ID
