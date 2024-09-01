@@ -139,9 +139,6 @@ const handleReady = (roomId, socket, data) => {
     socket.emit('gamePlay', { message: `You are ready!`, state: {lobby: false, countDown: false, inGame: false, gameHero: false, gameObserver: false, gameLoser: false, gameCheck: true} })
     startGame(roomId);
   } else {
-    console.log(rooms[roomId].gameState.readyUsers);
-    console.log(rooms[roomId].users.length);
-    console.log(rooms[roomId].users);
     socket.broadcast.to(roomId).emit('chat', { message: `${data.name} is ready!`, data });
     socket.emit('gamePlay', { message: `You are ready!`, state: {lobby: false, countDown: false, inGame: false, gameHero: false, gameObserver: false, gameLoser: false, gameCheck: true} });
   }
