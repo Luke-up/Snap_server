@@ -72,7 +72,7 @@ io.on('connection', (socket) => {
       
       socket.broadcast.to(roomId).emit('playerJoined', { scoreCard: rooms[roomId].scoreCard, message: `${joinSettings.name} has logged on` });
       console.log(`User joined room = ${roomId}`);
-      socket.emit('roomJoined', { scoreCard: rooms[roomId].scoreCard });
+      socket.emit('roomJoined', { scoreCard: rooms[roomId].scoreCard, roomId });
     } else {
       socket.emit('roomFull', { message: 'Room is full or does not exist' });
     }
