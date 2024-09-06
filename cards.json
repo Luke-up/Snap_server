@@ -2,183 +2,156 @@
 
     {
         "category": "animals",
-        "value":"pig",
-        "1": "pig",
-        "2": "oink",
-        "3": "pork"
+        "value":"cat",
+        "1": "猫",
+        "2": "にゃんにゃん",
+        "3": "🐱"
     },
     {   "category": "animals",
-        "value":"cow",
-        "1": "cow",
-        "2": "moo",
-        "3": "beef"
+        "value":"dog",
+        "1": "犬",
+        "2": "わんわん",
+        "3": "🐶"
     },
     {   "category": "animals",
-        "value": "chicken",
-        "1": "chicken",
-        "2": "cluck",
-        "3": "chicken"
+        "value": "frog",
+        "1": "かえる",
+        "2": "げろげろ",
+        "3": "🐸"
     },
     {   "category": "animals",
-        "value": "sheep",
-        "1": "sheep",
-        "2": "baa",
-        "3": "mutton"
+        "value": "elephant",
+        "1": "像",
+        "2": "ぞうぞう",
+        "3": "🐘"
     },
     {   "category": "animals",
-        "value": "deer",
-        "1": "deer",
-        "2": "howl",
-        "3": "venison"
+        "value": "pig",
+        "1": "豚",
+        "2": "ぶーぶー",
+        "3": "🐷"
     },
     {   "category": "animals",
-        "value": "rabbit",
-        "1": "rabbit",
-        "2": "thump",
-        "3": "rabbit"
+        "value": "cow",
+        "1": "牛",
+        "2": "もーもー",
+        "3": "🐄"
     },
     {   "category": "animals",
-        "value": "duck",
-        "1": "duck",
-        "2": "quack",
-        "3": "duck"
+        "value": "fox",
+        "1": "きつね",
+        "2": "こんこん",
+        "3": "🦊"
     },
     {   "category": "animals",
-        "value": "goat",
-        "1": "goat",
-        "2": "baa",
-        "3": "chevon"
-    },
-    {   "category": "animals",
-        "value": "fish",
-        "1": "fish",
-        "2": "glub",
-        "3": "sushimi"
-    },
-    {
-        "category": "emotions",
-        "value": "happy",
-        "1": "happy",
-        "2": "laugh",
-        "3": "😄"
-    },
-    {
-        "category": "emotions",
-        "value": "sad",
-        "1": "sad",
-        "2": "cry",
-        "3": "😢"
-    },
-    {
-        "category": "emotions",
-        "value": "angry",
-        "1": "angry",
-        "2": "shout",
-        "3": "😡"
-    },
-    {
-        "category": "emotions",
-        "value": "surprised",
-        "1": "surprised",
-        "2": "gasp",
-        "3": "😲"
-    },
-    {
-        "category": "emotions",
-        "value": "scared",
-        "1": "scared",
-        "2": "scream",
-        "3": "😱"
-    },
-    {
-        "category": "emotions",
-        "value": "disgusted",
-        "1": "disgusted",
-        "2": "vomit",
-        "3": "🤢"
-    },
-    {
-        "category": "emotions",
-        "value": "confused",
-        "1": "confused",
-        "2": "huh",
-        "3": "🤔"
+        "value": "horse",
+        "1": "馬",
+        "2": "ひーひーん",
+        "3": "🐎"
     },
     {
         "category": "emotions",
         "value": "excited",
-        "1": "excited",
-        "2": "yay",
-        "3": "🎉"
+        "1": "ワクワク",
+        "2": "わくわく",
+        "3": "😃"
     },
     {
         "category": "emotions",
-        "value": "bored",
-        "1": "bored",
-        "2": "yawn",
-        "3": "😴"
+        "value": "sleepy",
+        "1": "ウトウト",
+        "2": "うとうと",
+        "3": "🥱"
+    },
+    {
+        "category": "emotions",
+        "value": "surprised",
+        "1": "ビックリ",
+        "2": "びっくり",
+        "3": "😳"
+    },
+    {
+        "category": "emotions",
+        "value": "cheerful",
+        "1": "ウキウキ",
+        "2": "うきうき",
+        "3": "😊"
+    },
+    {
+        "category": "emotions",
+        "value": "irritated",
+        "1": "イライラ",
+        "2": "いらいら",
+        "3": "😤"
+    },
+    {
+        "category": "emotions",
+        "value": "lazy",
+        "1": "ノロノロ",
+        "2": "のろのろ",
+        "3": "😒"
+    },
+    {
+        "category": "emotions",
+        "value": "nauseous",
+        "1": "ムカムカ",
+        "2": "むかむか",
+        "3": "🤢"
     },
     {
         "category": "verbs",
-        "value": "run",
-        "1": "run",
-        "2": "pant",
-        "3": "ran"
+        "value": "scream",
+        "1": "キャー！",
+        "2": "きゃー！",
+        "3": "😱"
     },
     {
         "category": "verbs",
-        "value": "jump",
-        "1": "jump",
-        "2": "boing",
-        "3": "jumped"
+        "value": "sneeze",
+        "1": "クシュ",
+        "2": "くしゅ",
+        "3": "🤧"
     },
     {
         "category": "verbs",
-        "value": "swim",
-        "1": "swim",
-        "2": "splash",
-        "3": "swam"
+        "value": "whisper",
+        "1": "コソコソ",
+        "2": "こそこそ",
+        "3": "🤫"
     },
     {
         "category": "verbs",
-        "value": "fly",
-        "1": "fly",
-        "2": "flap",
-        "3": "flew"
+        "value": "rolling",
+        "1": "コロコロ",
+        "2": "ころころ",
+        "3": "🔄"
     },
     {
         "category": "verbs",
-        "value": "sing",
-        "1": "sing",
-        "2": "la la la",
-        "3": "sang"
+        "value": "spin",
+        "1": "クルクル",
+        "2": "ぐるぐる",
+        "3": "🌀"
     },
     {
         "category": "verbs",
-        "value": "dance",
-        "1": "dance",
-        "2": "tap",
-        "3": "danced"
+        "value": "do slowly",
+        "1": "ユックリ",
+        "2": "ゆっくり",
+        "3": "🐌"
     },
     {
         "category": "verbs",
-        "value": "eat",
-        "1": "eat",
-        "2": "chew",
-        "3": "ate"
+        "value": "cough",
+        "1": "コホンコホン",
+        "2": "こほんこほん",
+        "3": "😷"
     },
     {
         "category": "verbs",
-        "value": "sleep",
-        "1": "sleep",
-        "2": "snore",
-        "3": "slept"
-    },
-    {
-        "category": "verbs",
-        "value": "drink",
-        "1": "drink",
-        "2": "gulp",
-        "3": "drank"
+        "value": "chomping",
+        "1": "パクパク",
+        "2": "ぱくぱく",
+        "3": "🧟"
     }
 ]
