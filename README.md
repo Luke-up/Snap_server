@@ -16,7 +16,7 @@ npm start:dev
 
 This backend is designed to work with the Snap game frontend:
 
-Frontend repo: https://github.com/Luke-up/Snap_game_frontend
+Frontend repo: https://github.com/Luke-up/Snap_app
 
 ## Features
 
