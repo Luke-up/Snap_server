@@ -4,12 +4,20 @@ const { Server } = require('socket.io');
 const cors = require('cors');
 const fs = require('fs');
 const path = require('path');
+const dotenv = require('dotenv');
 
+dotenv.config();
 const app = express();
+
+app.use(cors({
+  origin: process.env.CORS_ORIGIN || 'http://localhost:3000'
+}));
+
 const httpServer = http.createServer(app);
+
 const io = new Server(httpServer, {
   cors: {
-    origin: '*',
+    origin: process.env.CORS_ORIGIN || 'http://localhost:3000',
     methods: ['GET', 'POST'],
   },
 });
