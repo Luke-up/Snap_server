@@ -19,6 +19,9 @@ This backend is designed to work with the Snap game frontend:
 Frontend repo: https://github.com/Luke-up/Snap_game_frontend
 
 ## Features
+
 **WebSocket Communication**: Facilitates real-time multiplayer functionality.
+
 **Room Management**: Players can create and join rooms with unique IDs.
+
 **Game State Handling**: Manages player actions, game flow, and scoring logic.
