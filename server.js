@@ -6,7 +6,7 @@ const fs = require('fs');
 const path = require('path');
 const dotenv = require('dotenv');
 
-dotenv.config();
+dotenv.config({ path: `.env.${process.env.NODE_ENV}` });
 const app = express();
 
 app.use(cors({
@@ -93,22 +93,15 @@ io.on('connection', (socket) => {
   // Handle the snap event
   socket.on('action', (data) => {
     const roomId = getRoomId(socket);
-    if (roomId) {
-      if (data.action === "ready") {
-        handleReady(roomId, socket, data);
-      }
-      if (data.action === "snap") {
-        handleSnap(roomId, socket, data);
-      }
-      if (data.action === "noSnap") {
-        handleNoSnap(roomId, socket, data);
-      }
-      if (data.action === "cardSelect") {
-        handleSelectCards(roomId, socket, data);
-      }
-      if (data.action === "logout") {
-        handleLogOut(socket);
-      }
+    if (roomId || data.action === 'logout') {
+      const actionHandlers = {
+        ready: () => handleReady(roomId, socket, data),
+        snap: () => handleSnap(roomId, socket, data),
+        noSnap: () => handleNoSnap(roomId, socket, data),
+        cardSelect: () => handleSelectCards(roomId, socket, data),
+        logout: () => handleLogOut(socket),
+      };
+      actionHandlers[data.action]?.();
     }
   });
 
@@ -130,22 +123,27 @@ io.on('connection', (socket) => {
 
 const handleLogOut = (socket) => {
   const roomId = getRoomId(socket);
-  if (roomId) {
-    const name = rooms[roomId].scoreCard[socket.id].name;
+  if (roomId && rooms[roomId]) {
+    const scoreEntry = rooms[roomId].scoreCard[socket.id];
+    if (!scoreEntry) {
+      return;
+    }
+    const name = scoreEntry.name;
     rooms[roomId].users = rooms[roomId].users.filter(userId => userId !== socket.id);
     delete rooms[roomId].scoreCard[socket.id];
     if (rooms[roomId].users.length === 0) {
-    delete rooms[roomId];
+      delete rooms[roomId];
     } else if (rooms[roomId].users.length >= 1) {
       socket.broadcast.to(roomId).emit('gamePlay', { scoreCard: rooms[roomId].scoreCard, message: `${name} has logged out`, state: {lobby: true, countDown: false, inGame: false, gameHero: false, gameObserver: false, gameLoser: false, gameCheck: false} });
     }
   }
-  
 }
 
 // Handle the ready event
 const handleReady = (roomId, socket, data) => {
-  rooms[roomId].gameState.readyUsers.push(socket.id);
+  if (!rooms[roomId].gameState.readyUsers.includes(socket.id)) {
+    rooms[roomId].gameState.readyUsers.push(socket.id);
+  }
   if (rooms[roomId].gameState.readyUsers.length === rooms[roomId].users.length) {
     socket.broadcast.to(roomId).emit('chat', { message: `All users ready`, data });
     socket.emit('gamePlay', { message: `You are ready!`, state: {lobby: false, countDown: false, inGame: false, gameHero: false, gameObserver: false, gameLoser: false, gameCheck: true} })
@@ -165,14 +163,17 @@ const handleNoSnap = (roomId, socket, data) => {
   socket.broadcast.to(roomId).emit('gamePlay', { message: `${data.name} declares no matches!`, state: {lobby: false, countDown: false, inGame: false, gameHero: false, gameObserver: false, gameLoser: false, gameCheck: true} });
   socket.emit('gamePlay', { message: `You just said there were no matches!`, state: {lobby: false, countDown: false, inGame: false, gameHero: false, gameObserver: false, gameLoser: false, gameCheck: true} });
   setTimeout(() => {
-    if(! rooms[roomId].gameState.match) {
+    if (!rooms[roomId] || !rooms[roomId].scoreCard[socket.id]) {
+      return;
+    }
+    if (!rooms[roomId].gameState.match) {
       rooms[roomId].scoreCard[socket.id].score += 1;
       socket.emit('gamePlay', { scoreCard: rooms[roomId].scoreCard, message: `You were right, there are no matches!`, state: {lobby: true, countDown: false, inGame: false, gameHero: false, gameObserver: false, gameLoser: true, gameCheck: false} });
       socket.broadcast.to(roomId).emit('gamePlay', { scoreCard: rooms[roomId].scoreCard, message: `${data.name} was right, there are no matches!`, state: {lobby: true, countDown: false, inGame: false, gameHero: false, gameObserver: false, gameLoser: true, gameCheck: false} });
       rooms[roomId].gameState.loserUsers = [];
     } else if (rooms[roomId].gameState.loserUsers && rooms[roomId].gameState.loserUsers.length === rooms[roomId].users.length - 1) {
       rooms[roomId].scoreCard[socket.id].score -= 0.5;
-      socket.emit('gamePlay', { scoreCard: rooms[roomId].scoreCard, message: `You were wong, there was a match! Looks like nobody wins this round.`, state: {lobby: true, countDown: false, inGame: false, gameHero: false, gameObserver: false, gameLoser: false, gameCheck: false} });
+      socket.emit('gamePlay', { scoreCard: rooms[roomId].scoreCard, message: `You were wrong, there was a match! Looks like nobody wins this round.`, state: {lobby: true, countDown: false, inGame: false, gameHero: false, gameObserver: false, gameLoser: false, gameCheck: false} });
       socket.broadcast.to(roomId).emit('gamePlay', { scoreCard: rooms[roomId].scoreCard, message: `${data.name} was wrong, there is a match! Looks like nobody wins this round.`, state: {lobby: true, countDown: false, inGame: false, gameHero: false, gameObserver: false, gameLoser: false, gameCheck: false} });
       rooms[roomId].gameState.loserUsers = [];
     } else {
@@ -189,6 +190,9 @@ const handleSelectCards = (roomId, socket, data) => {
   socket.broadcast.to(roomId).emit('gamePlay', { state: {lobby: false, countDown: false, inGame: false, gameHero: false, gameObserver: false, gameLoser: false, gameCheck: true} });
   socket.emit('gamePlay', { state: {lobby: false, countDown: false, inGame: false, gameHero: false, gameObserver: false, gameLoser: false, gameCheck: true} });
   setTimeout(() => {
+    if (!rooms[roomId] || !rooms[roomId].scoreCard[socket.id]) {
+      return;
+    }
     if (data.cards[0].card === data.cards[1].card) {
       rooms[roomId].scoreCard[socket.id].score += 1;
       socket.emit('gamePlay', { scoreCard: rooms[roomId].scoreCard, message: `Yes! It's a match`, state: {lobby: true, countDown: false, inGame: false, gameHero: false, gameObserver: false, gameLoser: true, gameCheck: false} });
@@ -226,18 +230,20 @@ const startGame = (roomId) => {
 };
 
 const generateCardArray = (settings, userCount) => {
-  let cardOptionsArray = [...allCards];
   let categoryUnSet = true;
   let currentCardOptions = [];
 
   Object.keys(settings).forEach((category) => {
     if (settings[category]) {
       categoryUnSet = false;
-      currentCardOptions = currentCardOptions.concat(cardOptionsArray.filter(card => card.category === category));
+      currentCardOptions = currentCardOptions.concat(allCards.filter(card => card.category === category));
     } 
   });
   if (categoryUnSet) {
-    currentCardOptions = cardOptionsArray;
+    currentCardOptions = [...allCards];
+  }
+  if (currentCardOptions.length === 0) {
+    return ({options: [], match: false});
   }
 
   const options = [];
@@ -266,21 +272,21 @@ const generateCardArray = (settings, userCount) => {
     currentCardOptions.splice(randomIndex, 1);
     options.push(randomCard);
   }
-  options.shuffle();
+  shuffleArray(options);
   return ({options: options, match: includeMatchingPair});
 };
 
-Array.prototype.shuffle = function() {
-  for (let i = this.length - 1; i > 0; i--) {
+const shuffleArray = (array) => {
+  for (let i = array.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));
-    [this[i], this[j]] = [this[j], this[i]];
+    [array[i], array[j]] = [array[j], array[i]];
   }
-  return this;
+  return array;
 };
 
 // Function to generate a unique room ID
 function generateRoomId() {
-  return Math.random().toString(36).substr(2, 9);
+  return Math.random().toString(36).slice(2, 11);
 }
 
 // Function to get the room ID of a user
